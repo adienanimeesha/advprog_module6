@@ -17,3 +17,9 @@ For this commit, the server respond differently depending on the request path. T
 
 ## Commit 4 Reflection
 Adding a ten-second pause requests to `/sleep` froze the server completely, whereas the other browser tabs just load until the delay is finished. This shows that Rust handles requests one at a time, so a single slow request holds every other browser tabs up.
+
+-----
+
+## Commit 5 Reflection
+In this commit, the single-threaded is updated to a multithreaded by building a custom ThreadPool. Instead of processing each connection sequentially, the server now spins up four worker threads that pull tasks from a shared channel, letting multiple requests run at the same time. The messages like “Worker 0 got a job; executing” in the terminal showed  slow requests no longer block the entire server. 
+![commit 5 screenshot](./commit5.png)
