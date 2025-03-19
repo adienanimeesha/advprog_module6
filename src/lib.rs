@@ -1,6 +1,6 @@
 use std::{
     sync::{mpsc, Arc, Mutex},
-    thread::{self, JoinHandle},
+    thread,
 };
 
 pub struct ThreadPool {
@@ -11,20 +11,24 @@ pub struct ThreadPool {
 type Job = Box<dyn FnOnce() + Send + 'static>;
 
 impl ThreadPool {
-    pub fn new(size: usize) -> ThreadPool {
-        assert!(size > 0);
+    pub fn build(size: usize) -> Result<ThreadPool, String> {
+        if size == 0 {
+            return Err("ThreadPool size must be greater than zero".into());
+        }
 
         let (sender, receiver) = mpsc::channel();
         let receiver = Arc::new(Mutex::new(receiver));
-
         let mut workers = Vec::with_capacity(size);
 
         for id in 0..size {
             workers.push(Worker::new(id, Arc::clone(&receiver)));
         }
 
-        ThreadPool { workers, sender }
+        Ok(ThreadPool { workers, sender })
+    }
 
+    pub fn new(size: usize) -> ThreadPool {
+        ThreadPool::build(size).expect("ThreadPool size must be > 0")
     }
 
     pub fn execute<F>(&self, f: F)
@@ -32,7 +36,6 @@ impl ThreadPool {
         F: FnOnce() + Send + 'static,
     {
         let job = Box::new(f);
-        
         self.sender.send(job).unwrap();
     }
 }
@@ -50,6 +53,6 @@ impl Worker {
             job();
         });
 
-        Worker {id, thread }
+        Worker { id, thread }
     }
 }

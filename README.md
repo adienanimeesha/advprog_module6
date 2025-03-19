@@ -23,3 +23,12 @@ Adding a ten-second pause requests to `/sleep` froze the server completely, wher
 ## Commit 5 Reflection
 In this commit, the single-threaded is updated to a multithreaded by building a custom ThreadPool. Instead of processing each connection sequentially, the server now spins up four worker threads that pull tasks from a shared channel, letting multiple requests run at the same time. The messages like “Worker 0 got a job; executing” in the terminal showed  slow requests no longer block the entire server. 
 ![commit 5 screenshot](./commit5.png)
+
+-----
+
+## Bonus Reflection
+For the bonus improvement, I modify the code so that it makes the threadpool safer and more explicit. This is done by replacing the panic-on-zero constructor with the code snipet below in `main.rs`.
+```rust
+let pool = ThreadPool::build(4)
+```
+Because of this, `build()` will return an error that the code can catch, instead of it crashing when a pool size is zero. Other than that, the original `new(size)` is kept as a simple wrapper around `build()` for backwards compatibility. Lastly, instead of using `assert!`, the pool‑size validation is moved into an `if` that returns a `Result`, and then changed `main.rs` so it explicitly unwraps or handles that error.
